@@ -1,0 +1,75 @@
+// ==============================================================================
+// FIRST DRAFT / ARCHITECTURAL PSEUDOCODE - NOT A FINAL CONTRACT
+// Harness: naive-react
+// Thesis: The industry baseline — an unconstrained Thought -> Action -> Observation
+// loop. The agent decides when to execute tools and when to declare victory,
+// exposing the typical failure modes of early exit and unverified edits.
+// ==============================================================================
+
+type TaskContext = {
+  instruction: string,
+  max_turns: number?
+}
+
+type HarnessOutcome = {
+  status: "success" | "budget_exhausted" | "error",
+  turns_executed: number,
+  final_message: string
+}
+
+function main(task: TaskContext): HarnessOutcome {
+  let maxTurns: number = task.max_turns ?? 30
+  let currentTurn: number = 0
+
+  // Bind tools provided by the environment (satellite / container)
+  let tools = [
+    capability("exec:bash"),
+    capability("fs:read"),
+    capability("fs:write")
+  ]
+
+  let systemPrompt: string = """
+You are an autonomous AI software engineer.
+You are given a task instruction and full access to a Linux workspace.
+In each turn, you may:
+1. Think about the problem.
+2. Call tools to inspect code, edit files, or execute shell commands.
+3. Observe tool results.
+4. When you believe the task is resolved, emit your final answer.
+"""
+
+  let conversation: string = task.instruction
+
+  while currentTurn < maxTurns {
+    currentTurn = currentTurn + 1
+
+    let step = agentStep(
+      systemPrompt: systemPrompt,
+      conversation: conversation,
+      tools: tools,
+      model: "google/gemini-2.5-pro"
+    )
+
+    if step.disposition == "completed" {
+      return {
+        status: "success",
+        turns_executed: currentTurn,
+        final_message: step.assistant_text
+      }
+    }
+
+    if step.disposition == "error" {
+      return {
+        status: "error",
+        turns_executed: currentTurn,
+        final_message: step.error_message
+      }
+    }
+  }
+
+  return {
+    status: "budget_exhausted",
+    turns_executed: currentTurn,
+    final_message: "Turn limit reached without resolution."
+  }
+}

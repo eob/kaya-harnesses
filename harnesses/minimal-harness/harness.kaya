@@ -1,0 +1,34 @@
+// ==============================================================================
+// FIRST DRAFT / ARCHITECTURAL PSEUDOCODE - NOT A FINAL CONTRACT
+// Harness: minimal-harness
+// Purpose: Minimal end-to-end smoke test validating Harbor -> Adapter -> Kaya -> Container
+// ==============================================================================
+
+type TaskContext = {
+  instruction: string,
+  timeout_seconds: number?
+}
+
+type TaskResult = {
+  status: "completed" | "failed",
+  message: string
+}
+
+function main(task: TaskContext): TaskResult {
+  // Await satellite container embodiment
+  let session = awaitAttachment(capability: "exec:bash")
+
+  // Generate response or run single command
+  let prompt: string = "You are a test agent. Follow this instruction: " + task.instruction
+  let reply = generate(
+    system: "You are an automated evaluation test runner.",
+    message: prompt,
+    model: "google/gemini-2.5-flash"
+  )
+
+  // Emit result
+  return {
+    status: "completed",
+    message: reply
+  }
+}

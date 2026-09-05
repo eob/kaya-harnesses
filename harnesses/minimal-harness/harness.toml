@@ -1,0 +1,14 @@
+[harness]
+name = "minimal-harness"
+version = "0.1.0-draft"
+description = "Minimal one-shot connectivity smoke test harness for Harbor evaluation runner (FIRST DRAFT / ARCHITECTURAL PSEUDOCODE)."
+author = "eob"
+license = "Apache-2.0"
+entrypoint = "harness.kaya"
+
+[requirements]
+capabilities = ["exec:bash"]
+
+[models]
+default = "google/gemini-2.5-flash"
+temperature = 0.0

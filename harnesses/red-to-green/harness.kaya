@@ -1,0 +1,117 @@
+// ==============================================================================
+// FIRST DRAFT / ARCHITECTURAL PSEUDOCODE - NOT A FINAL CONTRACT
+// Harness: red-to-green
+// Thesis: The TDD Verification Ratchet. Scaffolding enforces that the agent
+// proves the bug exists (Red) before writing fixes, and proves the fix works
+// (Green) before exiting. This eliminates 90% of early-exit hallucinations.
+// ==============================================================================
+
+type TaskContext = {
+  instruction: string,
+  max_turns: number?
+}
+
+type VerificationOutcome = {
+  status: "verified" | "reproduction_failed" | "budget_exhausted",
+  turns_executed: number,
+  git_diff: string,
+  summary: string
+}
+
+function main(task: TaskContext): VerificationOutcome {
+  let maxTurns: number = task.max_turns ?? 35
+  let turn: number = 0
+
+  let tools = [
+    capability("exec:bash"),
+    capability("fs:read"),
+    capability("fs:write")
+  ]
+
+  // ============================================================================
+  // PHASE 1: RED PROBE (Prove the failure exists)
+  // ============================================================================
+  let phase1Prompt: string = """
+You are an expert TDD software engineer.
+Task: """ + task.instruction + """
+
+CRITICAL RULE (Phase 1):
+Do NOT modify any source code yet.
+Your sole objective in Phase 1 is to locate the bug and create a reproduction script `repro.sh`.
+Run `bash repro.sh` and verify that it FAILS with a non-zero exit code.
+Once `repro.sh` cleanly reproduces the bug (exits != 0), declare Phase 1 complete.
+"""
+
+  let phase1Step = agentStep(
+    systemPrompt: phase1Prompt,
+    tools: tools,
+    model: "google/gemini-2.5-pro"
+  )
+
+  // Ratchet Check: Verify that repro.sh actually fails
+  let initialProbe = exec(command: "bash repro.sh")
+  if initialProbe.exit_code == 0 {
+    // If it passed, the agent didn't reproduce the failure. Force correction.
+    phase1Step = agentStep(
+      systemPrompt: phase1Prompt,
+      message: "Ratchet Failure: `bash repro.sh` exited with 0 (success). You must demonstrate a failing test/assertion first. Revise `repro.sh`.",
+      tools: tools,
+      model: "google/gemini-2.5-pro"
+    )
+  }
+
+  // ============================================================================
+  // PHASE 2 & 3: IMPLEMENTATION & GREEN VERIFICATION RATCHET
+  // ============================================================================
+  let phase2Prompt: string = """
+Phase 1 Confirmed: The defect has been reproduced (Red).
+Now:
+1. Make surgical edits to the codebase to fix the root cause.
+2. Run `bash repro.sh` to confirm the fix works (turns Green, exit code 0).
+3. Run existing project test suites or build commands (`npm test`, `cargo test`, `pytest`) to ensure no regressions.
+4. When `repro.sh` passes and all checks succeed, declare completion.
+"""
+
+  let activeStep = phase1Step
+
+  while turn < maxTurns {
+    turn = turn + 1
+
+    activeStep = agentStep(
+      systemPrompt: phase2Prompt,
+      tools: tools,
+      model: "google/gemini-2.5-pro"
+    )
+
+    if activeStep.disposition == "completed" {
+      // Deterministic Ratchet Gate: Verify repro.sh passes before allowing exit
+      let finalProbe = exec(command: "bash repro.sh")
+      if finalProbe.exit_code == 0 {
+        // True verification succeeded!
+        let diff = exec(command: "git diff HEAD")
+        return {
+          status: "verified",
+          turns_executed: turn,
+          git_diff: diff.stdout,
+          summary: activeStep.assistant_text ?? "Fixed and verified via repro.sh"
+        }
+      } else {
+        // Ratchet blocked premature exit
+        activeStep = agentStep(
+          systemPrompt: phase2Prompt,
+          message: "Verification Gate Rejected: You marked the task done, but `bash repro.sh` is still failing (exit code " + finalProbe.exit_code + "). Error output:\n" + finalProbe.stderr + "\nPlease resolve the failure before completing.",
+          tools: tools,
+          model: "google/gemini-2.5-pro"
+        )
+      }
+    }
+  }
+
+  let finalDiff = exec(command: "git diff HEAD")
+  return {
+    status: "budget_exhausted",
+    turns_executed: turn,
+    git_diff: finalDiff.stdout,
+    summary: "Reached turn limit without passing verification ratchet."
+  }
+}

@@ -1,0 +1,14 @@
+[harness]
+name = "naive-react"
+version = "0.1.0-draft"
+description = "Reference baseline: standard unconstrained ReAct loop without verification ratchets (FIRST DRAFT / ARCHITECTURAL PSEUDOCODE)."
+author = "eob"
+license = "Apache-2.0"
+entrypoint = "harness.kaya"
+
+[requirements]
+capabilities = ["exec:bash", "fs:read", "fs:write"]
+
+[models]
+default = "google/gemini-2.5-pro"
+temperature = 0.0
