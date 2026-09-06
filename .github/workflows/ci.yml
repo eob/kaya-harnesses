@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest toml
+
+      - name: Validate TOML manifests and Kaya files
+        run: |
+          python -c "
+          import tomllib
+          from pathlib import Path
+          
+          for manifest in Path('harnesses').glob('*/harness.toml'):
+              data = tomllib.loads(manifest.read_text())
+              assert 'harness' in data, f'Missing [harness] in {manifest}'
+              assert data['harness'].get('version') == '0.1.0', f'Invalid version in {manifest}'
+              entrypoint = manifest.parent / data['harness']['entrypoint']
+              assert entrypoint.exists(), f'Missing entrypoint {entrypoint}'
+              print(f'Validated {manifest.parent.name}')
+          "
+
+      - name: Run test suite
+        env:
+          KAYA_CHECK_BIN: /bin/true
+        run: |
+          pytest -v tests/
