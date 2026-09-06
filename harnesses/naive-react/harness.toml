@@ -1,7 +1,7 @@
 [harness]
 name = "naive-react"
-version = "0.1.0-draft"
-description = "Reference baseline: standard unconstrained ReAct loop without verification ratchets (FIRST DRAFT / ARCHITECTURAL PSEUDOCODE)."
+version = "0.1.0"
+description = "Reference baseline: standard unconstrained ReAct loop without verification ratchets."
 author = "eob"
 license = "Apache-2.0"
 entrypoint = "harness.kaya"

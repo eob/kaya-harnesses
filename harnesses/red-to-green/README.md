@@ -1,7 +1,6 @@
 # `red-to-green` (Reference Challenger)
 
-> **FIRST DRAFT / ARCHITECTURAL PSEUDOCODE — NOT A FINAL CONTRACT**  
-> This harness illustrates the idiomatic Kaya specification for deterministic TDD verification ratchets.
+Reference challenger harness package for the Kaya agent runtime. Implements an opinionated TDD verification ratchet.
 
 ---
 
@@ -12,6 +11,7 @@ In the **HarnessBench** matrix, `red-to-green` represents the **compiler/test ve
 - **Model**: `google/gemini-2.5-pro` (0.0 temperature).
 - **Tooling**: `exec:bash`, `fs:read`, `fs:write`.
 - **Termination**: Blocked by deterministic harness gates until `repro.sh` exits with 0.
+- **LoC**: Under 35 lines of clean `.kaya` code.
 
 ### The Mechanism
 

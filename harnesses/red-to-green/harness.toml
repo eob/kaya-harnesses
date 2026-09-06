@@ -1,7 +1,7 @@
 [harness]
 name = "red-to-green"
-version = "0.1.0-draft"
-description = "Reference challenger: opinionated TDD ratchet enforcing test reproduction probe before code repair (FIRST DRAFT / ARCHITECTURAL PSEUDOCODE)."
+version = "0.1.0"
+description = "Reference challenger: opinionated TDD ratchet enforcing test reproduction probe before code repair."
 author = "eob"
 license = "Apache-2.0"
 entrypoint = "harness.kaya"

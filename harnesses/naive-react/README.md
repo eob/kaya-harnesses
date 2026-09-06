@@ -1,20 +1,20 @@
 # `naive-react` (Reference Baseline)
 
-> **FIRST DRAFT / ARCHITECTURAL PSEUDOCODE — NOT A FINAL CONTRACT**  
-> This harness illustrates the idiomatic Kaya specification for standard ReAct agent choreographies.
+Reference baseline harness package for the Kaya agent runtime. Implements a minimal, unconstrained ReAct loop.
 
 ---
 
 ## Evaluation Role
 
-In the **HarnessBench** matrix, `naive-react` represents the **unconstrained status quo**:
+In the **HarnessBench** evaluation matrix, `naive-react` represents the **unconstrained status quo**:
 - **Workflow**: Standard Thought $\to$ Action $\to$ Observation.
 - **Model**: `google/gemini-2.5-pro` (0.0 temperature).
 - **Tooling**: `exec:bash`, `fs:read`, `fs:write`.
 - **Termination**: Model-directed exit (no compiler, linter, or test gates enforced by the harness).
+- **LoC**: Under 20 lines of clean `.kaya` code.
 
 ### Why Include It?
-Most modern agent benchmarks (and commercial developer tools) deploy variants of this loop. When evaluated on Terminal-Bench, it reveals the characteristic pathology of unconstrained LLMs:
+Most modern agent benchmarks deploy variants of this loop. When evaluated on Terminal-Bench, it reveals the characteristic pathology of unconstrained LLMs:
 1. **Premature Victory**: The model makes an edit, assumes the syntax is valid, and completes the turn without running tests.
 2. **Silent Breakage**: Unintended regressions in adjacent modules go undetected because no test suite execution was mandated.
 
